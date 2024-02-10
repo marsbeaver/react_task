@@ -60,17 +60,37 @@ async function run(){
     app.use(cors());
     app.post("/register",async (req,res)=>{
         try{
-            let result = await u.insertOne(req.body);
-            console.log(result);
-            if(result){
-                res.send(req.body);
+            let email = req.body.emailId;
+            let mobile = req.body.mobile;
+            let check = await u.find({emailId:email,mobile:mobile}).toArray();
+            if(check.length!=0){
+                console.log("user already exists");
+                res.send("User already exists. Please enter a different mobile or email.");
             }else{
-                console.log("User already exists");
+                try{
+                    let result = await u.insertOne(req.body);
+                    res.send(req.body);
+                }catch(e){
+                    res.send("Something went wrong...");
+                }
             }
         }catch(e){
-            //console.log(e);
             res.send("Something went wrong...");
-    
+        }
+    });
+    app.post("/login",async (req,res)=>{
+        try{
+            let check = await u.find(req.body).toArray();
+            if(check.length!=0){
+                console.log("Found it!");
+                res.send(check);
+            }else{
+                res.status(404);
+                res.send("Not found");
+            }
+        }catch(e){
+            console.log(e);
+            res.send("Something went wrong...");
         }
     });
     app.listen(5000);

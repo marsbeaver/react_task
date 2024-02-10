@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { useRef } from 'react';
+import {Outlet, useNavigate} from "react-router-dom";
+
+
 function checkEmail(s){
   return String(s)
     .toLowerCase()
@@ -10,36 +13,91 @@ function checkEmail(s){
 const Login = () =>{
 
   const [inputs, setInputs] = useState({});
-  const myRef = useRef(null);
-  const disable_button = useRef(null);
+  const endpoint = "http://localhost:5000/login";
+  const msg = useRef(null);
+  const navigate = useNavigate();
+  let flag=true;
+
   const handleChange = (event) => {
-    const name = event.target.name;
-    const value = event.target.value;
+    const e = event.target;
+    const name = e.name;
+    const value = e.value;
+    
     setInputs(values => ({...values,[name]: value}))
-    const e = event.currentTarget;
-    if(e.name==="emailId/number"){
-      if((!checkEmail(e.value)&&isNaN(e.value))||(!isNaN(e.value)&&e.value.length!==10)&&(e.value)){
-        myRef.current.innerHTML="Please enter a valid email or mobile number";
-      }else{
-        myRef.current.innerHTML="";
+    
+    if(e.value){  
+      if(e.name==="emailId/number"){
+        if(!checkEmail(e.value)){
+          if(isNaN(e.value)){
+            msg.current.innerHTML="Please enter a valid email or mobile number";            
+          }
+        }
+      }else if(e.name==="password"&&e.value.length<8){
+        msg.current.innerHTML="Password must be at least 8 characters long";
       }
-    }else if(e.name==="password"){
-      if(e.value.length<8&&e.value){
-        myRef.current.innerHTML="Password must be at least 8 characters long";
-      }else{
-        myRef.current.innerHTML="";
+      else{
+        flag=false;
+        msg.current.innerHTML="";
       }
+    }else{
+      msg.current.innerHTML="";
     }
   }
 
-  const handleSubmit = (event)=>{
+  const handleSubmit = async (event)=>{
     event.preventDefault();
-    Object.keys(inputs).forEach(i => {
-      console.log(inputs[i]);
-    });
-    console.log(inputs);
-  }
+    const form = event.target;
 
+    for (let i = 0; i < event.target.length; i++) {
+      if(form[i].value===""){
+        msg.current.innerHTML = "Please fill all fields";
+        flag=true;
+        break;
+      }
+      flag=false;
+    }
+
+    if(flag==false){
+      //Get the data from form
+      console.log("Submitting");
+      const data = Array.from(event.target.elements)
+      .filter((input)=>input.name)
+      .reduce((obj, input)=> Object.assign(obj,{[input.name]:input.value}),{});
+
+      //check if email or number
+
+      let key = "";
+      if(checkEmail(Object.values(data)[0])){
+        key="emailId";
+      }else{
+        key="mobile";
+      }
+      Object.defineProperty(data,key,Object.getOwnPropertyDescriptor(data,"emailId/number"));
+      delete data["emailId/number"];
+      
+      //Send data to server
+      
+      let result = await fetch(endpoint,{
+        method: 'post',
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type':'application/json'
+        }
+      });
+      console.log(result.status);
+      try{
+        result.text().then((result)=>console.log(result));
+      }catch(err){
+        console.log(err);
+      }
+      console.log(result);
+      if(result.status==200){
+        navigate("/home");
+      }else{
+        alert("User not found");
+      }
+    }
+  };
   const cols = {
     "emailId/number":"text",
     "password":"password"
@@ -59,9 +117,9 @@ const Login = () =>{
     <h1>Login</h1>
     <form action="" onSubmit={handleSubmit}>
         {f}
-        <input type="submit" value="Submit" ref={disable_button} />
+        <input type="submit" value="Submit" />
     </form>
-    <p ref={myRef}></p>
+    <p ref={msg}></p>
   </div>
   )
 }

@@ -8,27 +8,28 @@ function checkEmail(s){
 const SignUp = () =>{
   const [inputs, setInputs] = useState({});
   const msg = useRef(null);
-  const disable_button = useRef(null);
+  
   const endpoint = "http://localhost:5000/register";
-  let flag=false;
+  let flag=true;
 
   const handleChange = (event) => {
     const e = event.target;
     const name = e.name;
     const value = e.value;
-    flag=false;
     setInputs(values => ({...values,[name]: value}))
+    
     if(e.value){  
       if(["firstName","lastName"].includes(e.name)&&/\d/.test(e.value)){
         msg.current.innerHTML="Names must contain only alphabets";
       }else if(e.name==="emailId"&&!checkEmail(e.value)){
         msg.current.innerHTML="Please enter a valid email";
-      }else if(e.name=="mobile"&&isNaN(e.value)||e.value.length!==10){
+      }else if(e.name=="mobile"&&isNaN(e.value)){
           msg.current.innerHTML="Please enter a valid 10 digit mobile number";   
       }else if(e.name==="password"&&e.value.length<8){
         msg.current.innerHTML="Password must be at least 8 characters long";
-      }else{
-        flag=true;
+      }
+      else{
+        flag=false;
         msg.current.innerHTML="";
       }
     }else{
@@ -39,36 +40,40 @@ const SignUp = () =>{
   const handleSubmit = async (event)=>{
     event.preventDefault();
     const form = event.target;
+
     for (let i = 0; i < event.target.length; i++) {
       if(form[i].value===""){
         msg.current.innerHTML = "Please fill all fields";
-        flag=false;
+        flag=true;
         break;
       }
+      flag=false;
     }
 
-    //Get the data from form
-    
-    const data = Array.from(event.target.elements)
-    .filter((input)=>input.name)
-    .reduce((obj, input)=> Object.assign(obj,{[input.name]:input.value}),{});
+    if(flag==false){
+      //Get the data from form
+      console.log("Submitting");
+      const data = Array.from(event.target.elements)
+      .filter((input)=>input.name)
+      .reduce((obj, input)=> Object.assign(obj,{[input.name]:input.value}),{});
 
-    //Send data to server
+      //Send data to server
 
-    let result = await fetch(endpoint,{
-      method: 'post',
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type':'application/json'
+      let result = await fetch(endpoint,{
+        method: 'post',
+        body: JSON.stringify(data),
+        headers: {
+          'Content-Type':'application/json'
+        }
+      });
+      try{
+        result.text().then((result)=>console.log(result));
+      }catch(err){
+        console.log(err);
       }
-    });
-    try{
-      result = await result.json();
-    }catch(err){
-      console.log(err);
-    }
-    if(result){
-      alert("Signed up successfully");
+      if(result){
+        alert("Signed up successfully");
+      }
     }
   };
   
@@ -94,7 +99,7 @@ const SignUp = () =>{
     <h1>Sign up</h1>
     <form acton="" onSubmit={handleSubmit} id="sign_up_form">
         {f}
-        <input type="submit" value="Submit" ref={disable_button} />
+        <input type="submit" value="Submit"/>
     </form>
     <p ref={msg}></p>
   </div>
