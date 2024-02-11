@@ -66,8 +66,6 @@ async function run(){
         
     }catch(e){
         console.log(e);
-    }finally{
-        server.close();
     }
 }
 
