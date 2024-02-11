@@ -1,6 +1,6 @@
 const {MongoClient, ServerApiVersion}= require("mongodb");
 const mongoose = require("mongoose") 
-const PORT=3000;
+const PORT=5000;
 const uri = "mongodb+srv://react_task_db:therectr@cluster0.y6z3nrg.mongodb.net/?retryWrites=true&w=majority";
 const client = new MongoClient(uri,{
     serverApi:{
@@ -9,12 +9,13 @@ const client = new MongoClient(uri,{
         deprecationErrors: true
     }
 });
+const express = require("express");
+const app = express();
+var server;
 async function run(){
     try{
         const d = client.db("login_data");
         const u = d.collection("user_data");
-        const express = require("express");
-        const app = express()
         const cors = require("cors");
 
         await client.connect();
@@ -57,10 +58,16 @@ async function run(){
                 res.send("Something went wrong...");
             }
         });
-        app.listen(5000);
+        try{
+            server = app.listen(PORT,()=>console.log(`Listening at port ${PORT}`));
+        }catch(e){
+            console.log(e);
+        }
         
     }catch(e){
         console.log(e);
+    }finally{
+        server.close();
     }
 }
 
