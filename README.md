@@ -21,3 +21,9 @@ This app allows users to create an account by filling the form and login using e
   <li>mongodb</li>
   <li>express</li>
 </ul>
+
+!["SignUp"](/task/img/sign_up_page.png)
+
+!["login"](/task/img/login_page.png)
+
+!["home"](/task/img/home.png)
