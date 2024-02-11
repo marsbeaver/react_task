@@ -1,35 +1,57 @@
 import React, { useState, useRef } from 'react';
+import {useNavigate} from "react-router-dom";
+
 function checkEmail(s){
   return String(s)
     .toLowerCase()
     .match(
       /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
 }
+
+function checkValidity(o){
+  let flag = true;
+  let k = Object.keys(o);
+  k.forEach( e => {
+    if(["firstName","lastName"].includes(e)&&/\d/.test(o[e])){
+      flag = flag&&false;
+    }else if(e==="emailId"&&!checkEmail(o[e])){
+      flag = flag&&false;
+    }else if(e==="mobile"&&isNaN(o[e])){
+      flag = flag&&false;
+    }else if(e==="password"&&o[e].length<8){
+      flag = flag&&false;
+    } 
+  });
+  return flag;
+}
+
+let flag=false;
+let empty_flag = false;
+
 const SignUp = () =>{
   const [inputs, setInputs] = useState({});
   const msg = useRef(null);
+  const Navigate = useNavigate();
   
   const endpoint = "http://localhost:5000/register";
-  let flag=true;
+  
 
   const handleChange = (event) => {
     const e = event.target;
     const name = e.name;
     const value = e.value;
     setInputs(values => ({...values,[name]: value}))
-    
     if(e.value){  
-      if(["firstName","lastName"].includes(e.name)&&/\d/.test(e.value)){
+      if(["firstName","lastName"].includes(e.name)&/\d/.test(e.value)){
         msg.current.innerHTML="Names must contain only alphabets";
-      }else if(e.name==="emailId"&&!checkEmail(e.value)){
+      }else if(e.name==="emailId"&!checkEmail(e.value)){
         msg.current.innerHTML="Please enter a valid email";
-      }else if(e.name=="mobile"&&isNaN(e.value)){
+      }else if(e.name==="mobile"&&(isNaN(e.value)||e.value.length!==10)){
           msg.current.innerHTML="Please enter a valid 10 digit mobile number";   
-      }else if(e.name==="password"&&e.value.length<8){
+      }else if(e.name==="password"&e.value.length<8){
         msg.current.innerHTML="Password must be at least 8 characters long";
       }
       else{
-        flag=false;
         msg.current.innerHTML="";
       }
     }else{
@@ -40,22 +62,25 @@ const SignUp = () =>{
   const handleSubmit = async (event)=>{
     event.preventDefault();
     const form = event.target;
-
-    for (let i = 0; i < event.target.length; i++) {
+    
+    for (let i = 0; i < form.length; i++) {
       if(form[i].value===""){
         msg.current.innerHTML = "Please fill all fields";
-        flag=true;
+        empty_flag=false;
         break;
       }
-      flag=false;
+      empty_flag=true;
     }
-
-    if(flag==false){
-      //Get the data from form
-      console.log("Submitting");
-      const data = Array.from(event.target.elements)
+    //Get the data from form
+    const data = Array.from(form.elements)
       .filter((input)=>input.name)
       .reduce((obj, input)=> Object.assign(obj,{[input.name]:input.value}),{});
+
+    flag = checkValidity(data);
+
+    if(flag&&empty_flag){
+      console.log("Submitting");
+      
 
       //Send data to server
 
@@ -67,13 +92,17 @@ const SignUp = () =>{
         }
       });
       try{
-        result.text().then((result)=>console.log(result));
+        result.text();
+        console.log("Created user account successfully!");
       }catch(err){
         console.log(err);
       }
       if(result){
         alert("Signed up successfully");
+        Navigate("/login");
       }
+    }else{
+      msg.current.innerHTML="Please check all fields...";
     }
   };
   

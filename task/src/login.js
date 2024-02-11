@@ -1,68 +1,90 @@
 import React, { useState } from 'react';
 import { useRef } from 'react';
-import {Outlet, useNavigate} from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 
+
+let flag=false;
+let empty_flag=false;
 
 function checkEmail(s){
   return String(s)
     .toLowerCase()
     .match(
       /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/);
+  }
+function checkValidity(o){
+  flag=true;
+    let k = Object.keys(o);
+    k.forEach( e => {
+      if(e==="emailId/number"){
+        if(!checkEmail(o[e])){
+          if((isNaN(o[e]))){
+            flag=flag&&false;
+          }
+        }
+      }else if(e==="password"){
+        if(o[e].length<8){
+          flag=flag&&false;
+        }
+      }
+  });
+  return flag;
 }
+
 
 const Login = () =>{
 
   const [inputs, setInputs] = useState({});
   const endpoint = "http://localhost:5000/login";
   const msg = useRef(null);
+  const inp = useRef(null);
   const navigate = useNavigate();
-  let flag=true;
-
+  
   const handleChange = (event) => {
     const e = event.target;
     const name = e.name;
     const value = e.value;
     
-    setInputs(values => ({...values,[name]: value}))
-    
+    setInputs(values => ({...values,[name]: value}));
     if(e.value){  
       if(e.name==="emailId/number"){
         if(!checkEmail(e.value)){
-          if(isNaN(e.value)){
+          if((isNaN(e.value))){
             msg.current.innerHTML="Please enter a valid email or mobile number";            
           }
         }
       }else if(e.name==="password"&&e.value.length<8){
-        msg.current.innerHTML="Password must be at least 8 characters long";
-      }
-      else{
-        flag=false;
+        msg.current.innerHTML="Password must be at least 8 characters";            
+      }else{
         msg.current.innerHTML="";
       }
     }else{
       msg.current.innerHTML="";
     }
   }
-
   const handleSubmit = async (event)=>{
     event.preventDefault();
     const form = event.target;
 
-    for (let i = 0; i < event.target.length; i++) {
+    for (let i = 0; i < form.length; i++) {
       if(form[i].value===""){
         msg.current.innerHTML = "Please fill all fields";
-        flag=true;
+        empty_flag=false;
         break;
       }
-      flag=false;
+      empty_flag=true;
     }
+    
+    const data = Array.from(event.target.elements)
+    .filter((input)=>input.name)
+    .reduce((obj, input)=> Object.assign(obj,{[input.name]:input.value}),{});
 
-    if(flag==false){
+    flag = checkValidity(data);
+
+    if((flag&&empty_flag)===true){
       //Get the data from form
       console.log("Submitting");
-      const data = Array.from(event.target.elements)
-      .filter((input)=>input.name)
-      .reduce((obj, input)=> Object.assign(obj,{[input.name]:input.value}),{});
+      
 
       //check if email or number
 
@@ -91,7 +113,7 @@ const Login = () =>{
         console.log(err);
       }
       console.log(result);
-      if(result.status==200){
+      if(result.status===200){
         navigate("/home");
       }else{
         alert("User not found");
@@ -108,7 +130,7 @@ const Login = () =>{
   for (let index = 0; index < l.length; index++) {
     f.push(<div key={index}>
                 <label>{l[index]}</label>
-                <input key={l[index]} type={t[index]} name={l[index]} value={inputs[l[index]]||""} onChange={handleChange}/>
+                <input ref={inp} key={l[index]} type={t[index]} name={l[index]} value={inputs[l[index]]||""} onChange={handleChange}/>
             </div>
     )
   }

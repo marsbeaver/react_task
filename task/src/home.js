@@ -1,10 +1,12 @@
 import ReactDOM from 'react-dom/client';
-export default function Home(){
+import {Outlet, Link} from "react-router-dom";
+const Home=()=>{
   return(
-    <h1>Home</h1>
+    <div>
+      <h1>Home</h1>
+      <Link to="/login">Logout</Link>
+    </div>
   )
 }
 
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<Home />);
+export default Home;
